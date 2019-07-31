@@ -92,17 +92,25 @@ onmessage = (event) => {
             // console.log('*faked* Document object for the worker', document);
 
             importScripts(
-                './tf.min.js'
+                './tf.min.js', './Snake.js'
             );
 
             runtimeInfo = event.data.runtimeInfo;
             workingCanvas = new Canvas(runtimeInfo.video.width, runtimeInfo.video.height);
             workingContext = workingCanvas.getContext('2d');
+            tf.tensor([1,2,3,4]).print();
+            snakeLogic();
             postMessage({route: 'initialized'});
             break;
-        case 'videoFrameUpdate':
+        case 'snakeLogic':
+            snakeLogic();
             break;
         default:
             postMessage({yo: 'had issues, dont even know what to do with this:' + event.data.route });
     }
 };
+
+function snakeLogic() {
+    let snake = new Snake();
+    debugger;
+}

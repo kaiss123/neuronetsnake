@@ -1,9 +1,26 @@
-// const User = require('model/snake.js');
-import {Snake} from './model/snake.js';
-// Instantiate User:
-let user = new Snake();
+// const User = require('model/Snake.js');
+// import {Snake} from './model/Snake.js';
+// // Instantiate User:
+// let user = new Snake();
 
-export class Population {
+const BOARD_SIZE = 25;
+const CONTROLSAI = {
+    LEFT: 2,
+    UP: 0,
+    RIGHT: 3,
+    DOWN: 1
+};
+
+const COLORS = {
+    GAME_OVER: '#D24D57',
+    FRUIT: '#EC644B',
+    HEAD: '#336E7B',
+    BODY: '#C8F7C5',
+    BOARD: '#86B5BD',
+    OBSTACLE: '#383522'
+};
+
+class Population {
 
     canvasMock = [];
 
@@ -55,7 +72,13 @@ export class Population {
                 let uiCanvas = canvasClone.transferControlToOffscreen();
                 //this.canvasMock[4].parentNode.replaceChild(canvasClone, this.canvasMock[4]);
 
-                snakeWorker.postMessage({route: 'init', fakeWindow, fakeDocument, runtimeInfo, uiCanvas}, [uiCanvas]); // window is copied, ui is "transfered" via 0 copy
+                snakeWorker.postMessage({route: 'init',
+                    fakeWindow,
+                    fakeDocument,
+                    runtimeInfo,
+                    uiCanvas,
+                    BOARD_SIZE},
+                    [uiCanvas]);
 
                 Promise.all(startupPromises).then(() => {
                     resolve();

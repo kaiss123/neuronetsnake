@@ -21,11 +21,10 @@ function Storage () {
     this.removeItem = function(id){ return delete _data[id]; };
     this.setItem = function(id, val){ return _data[id] = String(val); };
 }
+
 class Document extends EventTarget {}
 
 let window, document = new Document();
-
-let faceTracking;
 
 let runtimeInfo = {
     video: {
@@ -44,7 +43,6 @@ let workingCanvas,
 onmessage = (event) => {
     switch (event.data.route) {
         case 'init':
-            debugger;
             // do terrible things to the worker's global namespace to fool tensorflow
             for (let key in event.data.fakeWindow) {
                 if (!self[key]) {
@@ -100,50 +98,9 @@ onmessage = (event) => {
             runtimeInfo = event.data.runtimeInfo;
             workingCanvas = new Canvas(runtimeInfo.video.width, runtimeInfo.video.height);
             workingContext = workingCanvas.getContext('2d');
-
-            /////////////////////////////////////////////////////
-            faceTracking = new FaceTracking(vip=>{
-                if (vip){
-                    // console.log('New VIP!', vip.uuid);
-                    postMessage({route: 'updateFacePosition', vip});
-                } else {
-                    postMessage({route: 'noFacesFound'});
-                }
-            }, runtimeInfo.video.width, runtimeInfo.video.height);
-
-            faceTracking.startFaceTracking().then(()=>{
-                postMessage({route: 'initialized'});
-            });
-            ////////////////////////////////////////////////////////
-
+            postMessage({route: 'initialized'});
             break;
         case 'videoFrameUpdate':
-            if(!faceTracking) { return; }
-            // console.log('processing video', event);
-
-            // const imageData = new ImageData(
-            // 	new Uint8ClampedArray( event.data.buffer ),
-            // 	runtimeInfo.video.width,
-            // 	runtimeInfo.video.height
-            // );
-
-            // ctx.putImageData(imageData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight)
-            // workingContext.putImageData(imageData, 0, 0, 0, 0, runtimeInfo.video.width, runtimeInfo.video.height);
-
-            // void ctx.drawImage(image, dx, dy);
-            // void ctx.drawImage(image, dx, dy, dWidth, dHeight);
-            // void ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-            workingContext.drawImage(event.data.bitmap, 0, 0, runtimeInfo.video.width, runtimeInfo.video.height);
-            event.data.bitmap.close();
-
-            // console.log('detecting a face with this:', imageData, workingContext, workingCanvas);
-            faceTracking.detect(workingCanvas).then((allProfiles)=>{
-                // console.log('all profiles:', allProfiles);
-                postMessage({route: 'readyForNewImage'});
-            }).catch(err=>{
-                console.warn('detection exited with an error:', err);
-                postMessage({route: 'readyForNewImage'}); // Maybe we continue?
-            });
             break;
         default:
             postMessage({yo: 'had issues, dont even know what to do with this:' + event.data.route });

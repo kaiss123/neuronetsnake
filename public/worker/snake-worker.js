@@ -44,6 +44,7 @@ let workingCanvas,
 onmessage = (event) => {
     switch (event.data.route) {
         case 'init':
+            debugger;
             // do terrible things to the worker's global namespace to fool tensorflow
             for (let key in event.data.fakeWindow) {
                 if (!self[key]) {
@@ -93,9 +94,7 @@ onmessage = (event) => {
             // console.log('*faked* Document object for the worker', document);
 
             importScripts(
-                '/js/libs/faker.js',
-                '/js/libs/face-api.js',
-                '/js/workers/controls/face-tracking.js'
+                './tf.min.js'
             );
 
             runtimeInfo = event.data.runtimeInfo;

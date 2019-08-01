@@ -112,5 +112,7 @@ onmessage = (event) => {
 
 function snakeLogic() {
     let snake = new Snake();
-    debugger;
+    snake.setBoard();
+    snake.start();
+    console.log(snake);
 }

@@ -3,28 +3,12 @@
 // // Instantiate User:
 // let user = new Snake();
 
-const BOARD_SIZE = 25;
-const CONTROLSAI = {
-    LEFT: 2,
-    UP: 0,
-    RIGHT: 3,
-    DOWN: 1
-};
-
-const COLORS = {
-    GAME_OVER: '#D24D57',
-    FRUIT: '#EC644B',
-    HEAD: '#336E7B',
-    BODY: '#C8F7C5',
-    BOARD: '#86B5BD',
-    OBSTACLE: '#383522'
-};
 
 class Population {
 
     canvasMock = [];
 
-    workerCount = 4;
+    workerCount = 1;
     populationCount = 20;
     worker = [];
 
@@ -34,16 +18,17 @@ class Population {
 
     async setup() {
         this.canvasMock = this.initCanvasMock();
-        let kaisss = await this.initWorker();
+        this.worker = await this.initWorker();
         debugger;
     }
 
     initWorker() {
         return new Promise(resolve => {
             let startupPromises = [];
+            let tmpWorker = [];
             for (let i = 1; i <= this.workerCount; i++) {
                 let snakeWorker =  new Worker('http://localhost:8000/worker/snake-worker.js');
-                this.worker.push({i: snakeWorker});
+                tmpWorker.push({i: snakeWorker});
                 startupPromises.push(new Promise(r => {
                     snakeWorker.onmessage = (event) => {
                         if (event.data.yo) {
@@ -76,14 +61,13 @@ class Population {
                     fakeWindow,
                     fakeDocument,
                     runtimeInfo,
-                    uiCanvas,
-                    BOARD_SIZE},
+                    uiCanvas},
                     [uiCanvas]);
 
-                Promise.all(startupPromises).then(() => {
-                    resolve();
-                });
             }
+            Promise.all(startupPromises).then(() => {
+                resolve(tmpWorker);
+            });
         });
     }
 

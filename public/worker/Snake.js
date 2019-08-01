@@ -17,8 +17,8 @@ function Snake() {
         OBSTACLE: '#383522'
     };
 
-    // interval = 50;
-    // timer;
+    let interval = 50;
+    let timer;
     let score = 0;
     let lifeTime = 0;
     let lifeLeft = 200;
@@ -35,9 +35,9 @@ function Snake() {
     let tempDirection = CONTROLSAI.LEFT;
 
     // replay;
-    //
-    // isDeadResolver;
-    // isDead;
+
+    let isDeadResolver;
+    let isDead = false;
 
     let fruit = {x: -1, y: -1};
     let snake = {
@@ -45,8 +45,11 @@ function Snake() {
         parts: []
     };
 
+    let brain;
+
     this.start = () => {
-        debugger;
+        this.setBoard();
+        this.initBain();
         for (let i = 0; i < 3; i++) {
             snake.parts.push({x: Math.floor(BOARD_SIZE / 2 + i), y: Math.floor(BOARD_SIZE / 2)});
         }
@@ -57,7 +60,6 @@ function Snake() {
     this.setBoard = () => {
         board = [];
 
-        debugger;
         for (let i = 0; i < BOARD_SIZE; i++) {
             board[i] = [];
             for (let j = 0; j < BOARD_SIZE; j++) {
@@ -92,7 +94,7 @@ function Snake() {
         let tail = Object.assign({}, snake.parts[snake.parts.length - 1]);
 
         snake.parts.push(tail);
-        resetFruit();
+        this.resetFruit();
     };
 
     this.selfCollision = (part) => {
@@ -121,19 +123,32 @@ function Snake() {
         return newHead;
     };
 
-    this.updatePositions = () => {
+    this.getStatus = () => {
+        return new Promise(resolve => {
+            return isDeadResolver = resolve;
+        });
+    };
+
+    this.dead = ()  => {
+        isDead = true;
+        isDeadResolver(true);
+        clearTimeout(timer);
+        // this.calculateFitness();
+    };
+
+    this.updatePositions = async () => {
         this.lookAround();
-        //this.think();
+        await this.think();
         let newHead = this.repositionHead();
 
         if (this.boardCollision(newHead)) {
-            //dead();
+            this.dead();
             //this.isDeadResolver(true);
             return;
         }
 
         if (this.selfCollision(newHead)) {
-            // this.dead();
+            this.dead();
             // this.isDeadResolver(true);
             return;
         } else if (this.fruitCollision(newHead)) {
@@ -151,9 +166,9 @@ function Snake() {
 
         direction = tempDirection;
 
-        // this.timer = setTimeout(() => {
-        //     me.updatePositions();
-        // }, this.interval);
+        timer = setTimeout(() => {
+            this.updatePositions();
+        }, interval);
     };
 
     this.calculateFitness = () => {
@@ -178,6 +193,7 @@ function Snake() {
             ...this.lookInDirection({x: 0, y: 1}),
             ...this.lookInDirection({x: -1, y: 1}),
         ];
+        console.table(vision);
     };
 
     this.lookInDirection = (directionVector) => {
@@ -211,15 +227,35 @@ function Snake() {
         return look;
     };
 
-    // const think = async () => {
-    //     var output = await this.decide(this.vision);
-    //     this.netResult = output.dataSync();
-    //     const indexOfMaxValue = this.netResult.indexOf(Math.max(...this.netResult));
-    //     this.tempDirection = indexOfMaxValue;
-    //     //console.log('output: ', result, indexOfMaxValue);
-    // };
-    //
-    // const clone = () => {
-    //     // return new Snake(-1, this.interval, this.mind)
-    // }
+    this.think = async () => {
+        let output = await this.decide(vision);
+        let brainResult = output.dataSync();
+        console.table(brainResult);
+        const indexOfMaxValue = brainResult.indexOf(Math.max(...brainResult));
+        tempDirection = indexOfMaxValue;
+        //console.log('output: ', result, indexOfMaxValue);
+    };
+
+    const clone = () => {
+        // return new Snake(-1, this.interval, this.mind)
+    }
+
+    this.initBain = () => {
+        brain = tf.sequential();
+        brain.add(tf.layers.dense({inputShape: [24], units: 1}));
+        brain.add(tf.layers.dense({units: 24, activation: 'sigmoid',
+            useBias: true,
+            biasInitializer: 'randomNormal'}));
+        brain.add(tf.layers.dense({units: 24, activation: 'sigmoid',
+            useBias: true,
+            biasInitializer: 'randomNormal'}));
+        brain.add(tf.layers.dense({units: 4}));
+    };
+
+    this.decide = async (input) => {
+        //console.log('input: ', input);
+        return tf.tidy(() => {
+            return brain.predict(tf.tensor([input]));
+        });
+    };
 }

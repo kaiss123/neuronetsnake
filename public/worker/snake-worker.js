@@ -42,6 +42,9 @@ let workingCanvas,
 
 onmessage = (event) => {
     switch (event.data.route) {
+        case 'snakeLogic':
+            this.snakeLogic();
+            break;
         case 'init':
             // do terrible things to the worker's global namespace to fool tensorflow
             for (let key in event.data.fakeWindow) {
@@ -99,20 +102,26 @@ onmessage = (event) => {
             workingCanvas = new Canvas(runtimeInfo.video.width, runtimeInfo.video.height);
             workingContext = workingCanvas.getContext('2d');
             tf.tensor([1,2,3,4]).print();
-            snakeLogic();
             postMessage({route: 'initialized'});
-            break;
-        case 'snakeLogic':
-            snakeLogic();
             break;
         default:
             postMessage({yo: 'had issues, dont even know what to do with this:' + event.data.route });
     }
 };
 
-function snakeLogic() {
-    let snake = new Snake();
-    snake.setBoard();
-    snake.start();
-    console.log(snake);
-}
+let snakes;
+async function snakeLogic(size = 10) {
+    for(let i = 1; i <= size; i++) {
+        snakes.push(new Snake());
+    }
+    snakes.map((s) => s.start());
+
+    await done(snakes);
+    console.table(snakes);
+
+    postMessage({route: 'snakeLogic'});
+};
+
+function done(snakes) {
+    return Promise.all(snakes.map(  async (s)=> await s.getStatus()));
+};

@@ -3,14 +3,15 @@
 // // Instantiate User:
 // let user = new Snake();
 
+const { Observable } = rxjs;
 
 class Population {
-
     canvasMock = [];
 
-    workerCount = 1;
+    workerCount = 3;
     populationCount = 20;
     worker = [];
+    snakes = [];
 
     constructor() {
         this.setup();
@@ -18,58 +19,117 @@ class Population {
 
     async setup() {
         this.canvasMock = this.initCanvasMock();
-        this.worker = await this.initWorker();
+        this.worker = await this.initWorker().subscribe( (e) => console.log(e));
         debugger;
+        this.snakes = this.startSnakes();
+    }
+
+    startSnakes() {
+        let workerLoad = Math.floor(this.populationCount / this.workerCount);
+
     }
 
     initWorker() {
-        return new Promise(resolve => {
-            let startupPromises = [];
-            let tmpWorker = [];
-            for (let i = 1; i <= this.workerCount; i++) {
-                let snakeWorker =  new Worker('http://localhost:8000/worker/snake-worker.js');
-                tmpWorker.push({i: snakeWorker});
-                startupPromises.push(new Promise(r => {
-                    snakeWorker.onmessage = (event) => {
-                        if (event.data.yo) {
-                            console.log('visual worker says:', event.data.yo, event.data);
-                        } else {
-                            switch (event.data.route) {
-                                case 'initialized':
-                                    r();
-                                    console.log('initialized visuals');
-                                    break;
-                                default:
-                                    console.log('not sure what to do here', event.data);
-                            }
+        let startupPromises = [];
+        let tmpWorker = [];
+        for (let i = 1; i <= this.workerCount; i++) {
+            let snakeWorker = new Worker('http://localhost:8000/worker/snake-worker.js');
+            tmpWorker.push({i: snakeWorker});
+            startupPromises.push(new Observable(observer => {
+                snakeWorker.onmessage = (event) => {
+                    if (event.data.yo) {
+                        console.log('visual worker says:', event.data.yo, event.data);
+                    } else {
+                        switch (event.data.route) {
+                            case 'initialized':
+                                observer.next('worker i initialized visuals');
+                                console.log('initialized visuals');
+                                break;
+                            case 'snakeLogic':
+                                observer.next('asdasdasdasdasdas');
+                                break;
+                            default:
+                                console.log('not sure what to do here', event.data);
                         }
-                    };
-                }));
+                    }
+                };
+            }));
 
-                let fakeWindow = this.canvasMock[0];
-                let fakeDocument = this.canvasMock[1];
-                let runtimeInfo = this.canvasMock[2];
-                // let uiCanvas = Object.assign(this.canvasMock[3], {});
+            let fakeWindow = this.canvasMock[0];
+            let fakeDocument = this.canvasMock[1];
+            let runtimeInfo = this.canvasMock[2];
+            // let uiCanvas = Object.assign(this.canvasMock[3], {});
 
-                //first canvas can be detached with transferControlToOffscreen, multiple transferControlToOffscreen -> clone error
-                // hack to pass offscreens of clones of original...
-                let canvasClone = this.canvasMock[4].cloneNode();
-                let uiCanvas = canvasClone.transferControlToOffscreen();
-                //this.canvasMock[4].parentNode.replaceChild(canvasClone, this.canvasMock[4]);
+            //first canvas can be detached with transferControlToOffscreen, multiple transferControlToOffscreen -> clone error
+            // hack to pass offscreens of clones of original...
+            let canvasClone = this.canvasMock[4].cloneNode();
+            let uiCanvas = canvasClone.transferControlToOffscreen();
+            //this.canvasMock[4].parentNode.replaceChild(canvasClone, this.canvasMock[4]);
 
-                snakeWorker.postMessage({route: 'init',
+            snakeWorker.postMessage({
+                    route: 'init',
                     fakeWindow,
                     fakeDocument,
                     runtimeInfo,
-                    uiCanvas},
-                    [uiCanvas]);
+                    uiCanvas
+                },
+                [uiCanvas]);
 
-            }
-            Promise.all(startupPromises).then(() => {
-                resolve(tmpWorker);
-            });
-        });
+        }
+        return rxjs.zip(...startupPromises);
     }
+
+    // initWorker() {
+    //     return new Promise(resolve => {
+    //         let startupPromises = [];
+    //         let tmpWorker = [];
+    //         for (let i = 1; i <= this.workerCount; i++) {
+    //             let snakeWorker =  new Worker('http://localhost:8000/worker/snake-worker.js');
+    //             tmpWorker.push({i: snakeWorker});
+    //             startupPromises.push(new Promise(r => {
+    //                 snakeWorker.onmessage = (event) => {
+    //                     if (event.data.yo) {
+    //                         console.log('visual worker says:', event.data.yo, event.data);
+    //                     } else {
+    //                         switch (event.data.route) {
+    //                             case 'initialized':
+    //                                 r();
+    //                                 console.log('initialized visuals');
+    //                                 break;
+    //                             case 'snakeLogic':
+    //
+    //                                 break;
+    //                             default:
+    //                                 console.log('not sure what to do here', event.data);
+    //                         }
+    //                     }
+    //                 };
+    //             }));
+    //
+    //             let fakeWindow = this.canvasMock[0];
+    //             let fakeDocument = this.canvasMock[1];
+    //             let runtimeInfo = this.canvasMock[2];
+    //             // let uiCanvas = Object.assign(this.canvasMock[3], {});
+    //
+    //             //first canvas can be detached with transferControlToOffscreen, multiple transferControlToOffscreen -> clone error
+    //             // hack to pass offscreens of clones of original...
+    //             let canvasClone = this.canvasMock[4].cloneNode();
+    //             let uiCanvas = canvasClone.transferControlToOffscreen();
+    //             //this.canvasMock[4].parentNode.replaceChild(canvasClone, this.canvasMock[4]);
+    //
+    //             snakeWorker.postMessage({route: 'init',
+    //                 fakeWindow,
+    //                 fakeDocument,
+    //                 runtimeInfo,
+    //                 uiCanvas},
+    //                 [uiCanvas]);
+    //
+    //         }
+    //         Promise.all(startupPromises).then(() => {
+    //             resolve(tmpWorker);
+    //         });
+    //     });
+    // }
 
     initCanvasMock() {
         const body = document.body,

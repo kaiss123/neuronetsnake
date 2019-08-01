@@ -19,7 +19,8 @@
   "homepage": "https://github.com/kaiss123/neuronetsnake#readme",
   "dependencies": {
     "@tensorflow/tfjs": "^1.2.5",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "rxjs": "^6.5.2"
   },
   "devDependencies": {
     "nodemon": "^1.19.1"

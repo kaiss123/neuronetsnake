@@ -8,45 +8,58 @@ const { Observable } = rxjs;
 class Population {
     canvasMock = [];
 
-    workerCount = 3;
-    populationCount = 20;
+    workerCount = 2;
+    populationCount = 2;
     worker = [];
     snakes = [];
 
+    workerSubscription;
     constructor() {
         this.setup();
     }
 
     async setup() {
         this.canvasMock = this.initCanvasMock();
-        this.worker = await this.initWorker().subscribe( (e) => console.log(e));
-        debugger;
-        this.snakes = this.startSnakes();
+        this.workerSubscription = await this.initWorker().subscribe( (e) => {
+            if(e[0].route === 'initialized') {
+                this.worker = e.map(w => w.data);
+                this.snakes = this.startSnakes();
+            }
+            if(e[0].route === 'snakeLogic') {
+                //this.snakes = this.startSnakes();
+                console.table(e.map(i => i.data.fitSum));
+            }
+        });
     }
 
     startSnakes() {
         let workerLoad = Math.floor(this.populationCount / this.workerCount);
-
+        this.worker.map((w) => {
+            w.postMessage({route: 'snakeLogic', workerLoad: workerLoad});
+        });
     }
 
+    isFirstWorker = true;
+
     initWorker() {
-        let startupPromises = [];
+        let startupObservables = [];
         let tmpWorker = [];
         for (let i = 1; i <= this.workerCount; i++) {
             let snakeWorker = new Worker('http://localhost:8000/worker/snake-worker.js');
             tmpWorker.push({i: snakeWorker});
-            startupPromises.push(new Observable(observer => {
+            startupObservables.push(new Observable(observer => {
                 snakeWorker.onmessage = (event) => {
                     if (event.data.yo) {
                         console.log('visual worker says:', event.data.yo, event.data);
                     } else {
                         switch (event.data.route) {
                             case 'initialized':
-                                observer.next('worker i initialized visuals');
+                                observer.next({route: 'initialized', data: snakeWorker});
                                 console.log('initialized visuals');
                                 break;
                             case 'snakeLogic':
-                                observer.next('asdasdasdasdasdas');
+                                observer.next({route: 'snakeLogic', data: event.data});
+                                console.log('initialized snakeLogic');
                                 break;
                             default:
                                 console.log('not sure what to do here', event.data);
@@ -62,7 +75,15 @@ class Population {
 
             //first canvas can be detached with transferControlToOffscreen, multiple transferControlToOffscreen -> clone error
             // hack to pass offscreens of clones of original...
-            let canvasClone = this.canvasMock[4].cloneNode();
+            // first worker gets original canvas offscreen, others get cloned ones
+            let canvasClone;
+
+            if(this.isFirstWorker) {
+                canvasClone = this.canvasMock[4];
+                this.isFirstWorker = false;
+            } else {
+                canvasClone = this.canvasMock[4].cloneNode();
+            }
             let uiCanvas = canvasClone.transferControlToOffscreen();
             //this.canvasMock[4].parentNode.replaceChild(canvasClone, this.canvasMock[4]);
 
@@ -76,7 +97,7 @@ class Population {
                 [uiCanvas]);
 
         }
-        return rxjs.zip(...startupPromises);
+        return rxjs.zip(...startupObservables);
     }
 
     // initWorker() {
@@ -164,7 +185,7 @@ class Population {
         domCanvas.height = appDims.height;
         domCanvas.style.background = '#000';
         body.style.background = '#000';
-        const uiCanvas = domCanvas.transferControlToOffscreen(); // creates an offscreen canvas element that can be transfered to a web worker and keeps it linked to the original canvas
+        const uiCanvas = null; // creates an offscreen canvas element that can be transfered to a web worker and keeps it linked to the original canvas
         body.appendChild(domCanvas);
 
         var screenCopy = {};

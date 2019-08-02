@@ -193,7 +193,7 @@ function Snake() {
             ...this.lookInDirection({x: 0, y: 1}),
             ...this.lookInDirection({x: -1, y: 1}),
         ];
-        console.table(vision);
+        // console.table(vision);
     };
 
     this.lookInDirection = (directionVector) => {
@@ -230,7 +230,7 @@ function Snake() {
     this.think = async () => {
         let output = await this.decide(vision);
         let brainResult = output.dataSync();
-        console.table(brainResult);
+        // console.table(brainResult);
         const indexOfMaxValue = brainResult.indexOf(Math.max(...brainResult));
         tempDirection = indexOfMaxValue;
         //console.log('output: ', result, indexOfMaxValue);

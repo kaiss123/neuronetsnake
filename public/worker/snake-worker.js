@@ -40,10 +40,11 @@ let runtimeInfo = {
 let workingCanvas,
     workingContext;
 
-onmessage = (event) => {
+onmessage = async (event) => {
     switch (event.data.route) {
         case 'snakeLogic':
-            this.snakeLogic();
+            let snakeCount = event.data.workerLoad;
+            this.snakeLogic(snakeCount);
             break;
         case 'init':
             // do terrible things to the worker's global namespace to fool tensorflow
@@ -101,6 +102,13 @@ onmessage = (event) => {
             runtimeInfo = event.data.runtimeInfo;
             workingCanvas = new Canvas(runtimeInfo.video.width, runtimeInfo.video.height);
             workingContext = workingCanvas.getContext('2d');
+
+            const can  = event.data.uiCanvas;
+            const ctx = can.getContext('2d');
+
+            ctx.fillStyle = "blue";
+            ctx.fillRect(0, 0, can.width, can.height);
+
             tf.tensor([1,2,3,4]).print();
             postMessage({route: 'initialized'});
             break;
@@ -111,6 +119,7 @@ onmessage = (event) => {
 
 let snakes;
 async function snakeLogic(size = 10) {
+    snakes = [];
     for(let i = 1; i <= size; i++) {
         snakes.push(new Snake());
     }
@@ -118,10 +127,26 @@ async function snakeLogic(size = 10) {
 
     await done(snakes);
     console.table(snakes);
+    // let test = JSON.parse(JSON.stringify(snakes));
+    // postMessage({route: 'snakeLogic', snakes: test});
 
-    postMessage({route: 'snakeLogic'});
-};
+    let fitSum = calculateFitnessSum(snakes);
+    postMessage({route: 'snakeLogic', fitSum: fitSum});
+}
 
 function done(snakes) {
     return Promise.all(snakes.map(  async (s)=> await s.getStatus()));
-};
+}
+function calculateFitnessSum(snakes) {  //calculate the sum of all the snakes fitnesses
+    let fitnessSum = 0;
+    for(let i = 0; i < snakes.length; i++) {
+        fitnessSum += snakes[i].calculateFitness();
+    }
+
+    // if(this.fitnessSum > this.snakePopulationScore) {
+    //     this.snakePopulationScore = this.fitnessSum;
+    // }
+    // this.chartData.push({x: this.generation, y: this.fitnessSum / this.size});
+    return fitnessSum;
+}
+

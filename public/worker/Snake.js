@@ -1,14 +1,19 @@
-function Snake() {
-    const BOARD_SIZE = 25;
+export class Snake {
 
-    const CONTROLSAI = {
+    constructor() {
+
+    }
+
+    BOARD_SIZE = 25;
+
+    CONTROLSAI = {
         LEFT: 2,
         UP: 0,
         RIGHT: 3,
         DOWN: 1
     };
 
-    const COLORS = {
+    COLORS = {
         GAME_OVER: '#D24D57',
         FRUIT: '#EC644B',
         HEAD: '#336E7B',
@@ -17,126 +22,130 @@ function Snake() {
         OBSTACLE: '#383522'
     };
 
-    let interval = 50;
-    let timer;
-    let score = 0;
-    let lifeTime = 0;
-    let lifeLeft = 200;
-    let fitness = 1;
-    let vision;
+    interval = 0;
+    timer;
+    score = 0;
+    lifeTime = 0;
+    lifeLeft = 200;
+    fitness = 1;
+    vision;
     // netResult;
     // isdeadNow = false;
     //     // parentsFitness = -1;
 
-    let direction = CONTROLSAI.LEFT;
+    direction = this.CONTROLSAI.LEFT;
 
     //parts = [];
-    let board = [];
-    let tempDirection = CONTROLSAI.LEFT;
+    board = [];
+    tempDirection = this.CONTROLSAI.LEFT;
 
     // replay;
 
-    let isDeadResolver;
-    let isDead = false;
+    isDeadResolver;
+    isDead = false;
 
-    let fruit = {x: -1, y: -1};
-    let snake = {
-        direction: CONTROLSAI.LEFT,
+    fruit = {x: -1, y: -1};
+    snake = {
+        direction: this.CONTROLSAI.LEFT,
         parts: []
     };
 
-    let brain;
+    brain;
 
-    this.start = () => {
+    getBrain = () => this.brain;
+    getFitness = () => this.fitness;
+
+    start = () => {
         this.setBoard();
         this.initBain();
         for (let i = 0; i < 3; i++) {
-            snake.parts.push({x: Math.floor(BOARD_SIZE / 2 + i), y: Math.floor(BOARD_SIZE / 2)});
+            this.snake.parts.push({x: Math.floor(this.BOARD_SIZE / 2 + i),
+                y: Math.floor(this.BOARD_SIZE / 2)});
         }
         this.resetFruit();
         this.updatePositions();
     };
 
-    this.setBoard = () => {
-        board = [];
+    setBoard = () => {
+        this.board = [];
 
-        for (let i = 0; i < BOARD_SIZE; i++) {
-            board[i] = [];
-            for (let j = 0; j < BOARD_SIZE; j++) {
-                board[i][j] = false;
+        for (let i = 0; i < this.BOARD_SIZE; i++) {
+            this.board[i] = [];
+            for (let j = 0; j < this.BOARD_SIZE; j++) {
+                this.board[i][j] = false;
             }
         }
     };
 
-    this.randomBoardNumber = () => {
-        return Math.floor(Math.random() * BOARD_SIZE);
+    randomBoardNumber = () => {
+        return Math.floor(Math.random() * this.BOARD_SIZE);
     };
 
-    this.fruitCollision = (part) => {
-        return part.x === fruit.x && part.y === fruit.y;
+    fruitCollision = (part) => {
+        return part.x === this.fruit.x && part.y === this.fruit.y;
     };
 
-    this.resetFruit = () => {
+    resetFruit = () => {
         let x = this.randomBoardNumber();
         let y = this.randomBoardNumber();
 
-        if (board[y][x] === true) {
+        if (this.board[y][x] === true) {
             debugger;
             return this.resetFruit();
         }
-        fruit.x = x;
-        fruit.y = y;
+        this.fruit.x = x;
+        this.fruit.y = y;
     };
 
-    this.eatFruit = () => {
-        score++;
+    eatFruit = () => {
+        this.score++;
 
-        let tail = Object.assign({}, snake.parts[snake.parts.length - 1]);
+        let tail = Object.assign({}, this.snake.parts[this.snake.parts.length - 1]);
 
-        snake.parts.push(tail);
+        this.snake.parts.push(tail);
         this.resetFruit();
     };
 
-    this.selfCollision = (part) => {
-        if (part.x < BOARD_SIZE - 1 && part.y < BOARD_SIZE) {
-            return board[part.y][part.x] === true;
+    selfCollision = (part) => {
+        if (part.x < this.BOARD_SIZE - 1 && part.y < this.BOARD_SIZE) {
+            return this.board[part.y][part.x] === true;
         }
     };
 
-    this.boardCollision = (part) => {
-        return part.x === BOARD_SIZE || part.x === -1 || part.y === BOARD_SIZE || part.y === -1;
+    boardCollision = (part) => {
+        return part.x === this.BOARD_SIZE || part.x === -1 || part.y === this.BOARD_SIZE || part.y === -1;
     };
 
-    this.repositionHead = () => {
-        let newHead = Object.assign({}, snake.parts[0]);
+    repositionHead = () => {
+        let newHead = Object.assign({}, this.snake.parts[0]);
 
-        if (tempDirection === CONTROLSAI.LEFT) {
+        if (this.tempDirection === this.CONTROLSAI.LEFT) {
             newHead.x -= 1;
-        } else if (tempDirection === CONTROLSAI.RIGHT) {
+        } else if (this.tempDirection === this.CONTROLSAI.RIGHT) {
             newHead.x += 1;
-        } else if (tempDirection === CONTROLSAI.UP) {
+        } else if (this.tempDirection === this.CONTROLSAI.UP) {
             newHead.y -= 1;
-        } else if (tempDirection === CONTROLSAI.DOWN) {
+        } else if (this.tempDirection === this.CONTROLSAI.DOWN) {
             newHead.y += 1;
         }
 
         return newHead;
     };
 
-    this.getStatus = () => {
+    getStatus = () => {
         return new Promise(resolve => {
-            return isDeadResolver = resolve;
+            return this.isDeadResolver = resolve;
         });
     };
 
-    this.dead = ()  => {
-        isDead = true;
-        isDeadResolver(true);
-        clearTimeout(timer);
-        // this.calculateFitness();
+    dead = ()  => {
+        this.isDead = true;
+        this.isDeadResolver(true);
+        clearTimeout(this.timer);
+        this.calculateFitness();
     };
 
-    this.updatePositions = async () => {
+    updatePositions = async () => {
         this.lookAround();
         await this.think();
         let newHead = this.repositionHead();
@@ -155,36 +164,36 @@ function Snake() {
             this.eatFruit();
         }
 
-        let oldTail = snake.parts.pop();
-        board[oldTail.y][oldTail.x] = false;
+        let oldTail = this.snake.parts.pop();
+        this.board[oldTail.y][oldTail.x] = false;
 
-        snake.parts.unshift(newHead);
-        board[newHead.y][newHead.x] = true;
+        this.snake.parts.unshift(newHead);
+        this.board[newHead.y][newHead.x] = true;
 
-        lifeTime++;
-        lifeLeft--;
+        this.lifeTime++;
+        this.lifeLeft--;
 
-        direction = tempDirection;
+        this.direction = this.tempDirection;
 
         timer = setTimeout(() => {
             this.updatePositions();
-        }, interval);
+        }, this.interval);
     };
 
-    this.calculateFitness = () => {
-        if (score < 10) {
-            fitness = Math.floor(lifeTime * lifeTime) * Math.pow(2, score);
+    calculateFitness = () => {
+        if (this.score < 10) {
+            this.fitness = Math.floor(this.lifeTime * this.lifeTime) * Math.pow(2, this.score);
         } else {
-            fitness = Math.floor(lifeTime * lifeTime);
-            fitness *= Math.pow(2, 10);
-            fitness *= (score - 9);
+            this.fitness = Math.floor(this.lifeTime * this.lifeTime);
+            this.fitness *= Math.pow(2, 10);
+            this.fitness *= (this.score - 9);
         }
-        return fitness;
+        return this.fitness;
     };
 
-    this.lookAround = () => {
+    lookAround = () => {
 
-        vision = [...this.lookInDirection({x: -1, y: 0}),
+        this.vision = [...this.lookInDirection({x: -1, y: 0}),
             ...this.lookInDirection({x: -1, y: -1}),
             ...this.lookInDirection({x: 0, y: -1}),
             ...this.lookInDirection({x: 1, y: -1}),
@@ -196,8 +205,8 @@ function Snake() {
         // console.table(vision);
     };
 
-    this.lookInDirection = (directionVector) => {
-        let head = {...snake.parts[0]};
+    lookInDirection = (directionVector) => {
+        let head = {...this.snake.parts[0]};
         let look = new Array(3).fill(0);
         let distance = 0;
         let foodCollision = false;
@@ -227,35 +236,35 @@ function Snake() {
         return look;
     };
 
-    this.think = async () => {
-        let output = await this.decide(vision);
+    think = async () => {
+        let output = await this.decide(this.vision);
         let brainResult = output.dataSync();
         // console.table(brainResult);
         const indexOfMaxValue = brainResult.indexOf(Math.max(...brainResult));
-        tempDirection = indexOfMaxValue;
+        this.tempDirection = indexOfMaxValue;
         //console.log('output: ', result, indexOfMaxValue);
     };
 
-    const clone = () => {
+    clone = () => {
         // return new Snake(-1, this.interval, this.mind)
-    }
-
-    this.initBain = () => {
-        brain = tf.sequential();
-        brain.add(tf.layers.dense({inputShape: [24], units: 1}));
-        brain.add(tf.layers.dense({units: 24, activation: 'sigmoid',
-            useBias: true,
-            biasInitializer: 'randomNormal'}));
-        brain.add(tf.layers.dense({units: 24, activation: 'sigmoid',
-            useBias: true,
-            biasInitializer: 'randomNormal'}));
-        brain.add(tf.layers.dense({units: 4}));
     };
 
-    this.decide = async (input) => {
+    initBain = () => {
+        this.brain = tf.sequential();
+        this.brain.add(tf.layers.dense({inputShape: [24], units: 1}));
+        this.brain.add(tf.layers.dense({units: 24, activation: 'sigmoid',
+            useBias: true,
+            biasInitializer: 'randomNormal'}));
+        this.brain.add(tf.layers.dense({units: 24, activation: 'sigmoid',
+            useBias: true,
+            biasInitializer: 'randomNormal'}));
+        this.brain.add(tf.layers.dense({units: 4}));
+    };
+
+    decide = async (input) => {
         //console.log('input: ', input);
         return tf.tidy(() => {
-            return brain.predict(tf.tensor([input]));
+            return this.brain.predict(tf.tensor([input]));
         });
     };
 }

@@ -1,5 +1,4 @@
-// const User = require('model/Snake.js');
-// import {Snake} from './model/Snake.js';
+import {Snake} from './worker/Snake.js';
 // // Instantiate User:
 // let user = new Snake();
 
@@ -9,7 +8,7 @@ class Population {
     canvasMock = [];
 
     workerCount = 2;
-    populationCount = 2;
+    populationCount = 50;
     worker = [];
     snakes = [];
 
@@ -27,15 +26,21 @@ class Population {
             }
             if(e[0].route === 'snakeLogic') {
                 //this.snakes = this.startSnakes();
-                console.table(e.map(i => i.data.fitSum));
+                console.table(e.map(i => i.data.snakeData));
             }
         });
     }
 
     startSnakes() {
         let workerLoad = Math.floor(this.populationCount / this.workerCount);
+        let batches = [];
+        for(let i = 1; i <= this.populationCount; i++) {
+            batches.push(new Snake());
+        }
         this.worker.map((w) => {
-            w.postMessage({route: 'snakeLogic', workerLoad: workerLoad});
+           // w.postMessage({route: 'snakeLogic', workerLoad: workerLoad});
+            let workerBatch = batches.splice(workerLoad);
+            w.postMessage({route: 'snakeLogic', workerLoad: workerBatch});
         });
     }
 

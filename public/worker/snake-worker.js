@@ -96,7 +96,7 @@ onmessage = async (event) => {
             // console.log('*faked* Document object for the worker', document);
 
             importScripts(
-                './tf.min.js', './Snake.js'
+                './tf.min.js', './Snake1.js'
             );
 
             runtimeInfo = event.data.runtimeInfo;
@@ -117,21 +117,22 @@ onmessage = async (event) => {
     }
 };
 
-let snakes;
-async function snakeLogic(size = 10) {
-    snakes = [];
-    for(let i = 1; i <= size; i++) {
-        snakes.push(new Snake());
-    }
+let snakes1;
+async function snakeLogic(snakes) {
+    snakes1 = snakes;
+    // snakes = [];
+    // for(let i = 1; i <= size; i++) {
+    //    // snakes.push(new Snake());
+    // }
     snakes.map((s) => s.start());
 
     await done(snakes);
-    console.table(snakes);
+    //nicht das ganze brain, bias usw reicht
+    let snakeData = snakes.map(s => [s.getBrain(), s.getFitness()]);
     // let test = JSON.parse(JSON.stringify(snakes));
     // postMessage({route: 'snakeLogic', snakes: test});
 
-    let fitSum = calculateFitnessSum(snakes);
-    postMessage({route: 'snakeLogic', fitSum: fitSum});
+    postMessage({route: 'snakeLogic', snakeData: snakeData});
 }
 
 function done(snakes) {

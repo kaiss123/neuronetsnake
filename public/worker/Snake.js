@@ -1,7 +1,8 @@
+
 export class Snake {
 
     constructor() {
-
+        //this.start();
     }
 
     BOARD_SIZE = 25;
@@ -52,10 +53,10 @@ export class Snake {
 
     brain;
 
-    getBrain = () => this.brain;
-    getFitness = () => this.fitness;
+    // getBrain = () => this.brain;
+    // getFitness = () => this.fitness;
 
-    start = () => {
+    start() {
         this.setBoard();
         this.initBain();
         for (let i = 0; i < 3; i++) {
@@ -66,7 +67,7 @@ export class Snake {
         this.updatePositions();
     };
 
-    setBoard = () => {
+    setBoard() {
         this.board = [];
 
         for (let i = 0; i < this.BOARD_SIZE; i++) {
@@ -75,17 +76,17 @@ export class Snake {
                 this.board[i][j] = false;
             }
         }
-    };
+    }
 
-    randomBoardNumber = () => {
+    randomBoardNumber() {
         return Math.floor(Math.random() * this.BOARD_SIZE);
     };
 
-    fruitCollision = (part) => {
+    fruitCollision(part) {
         return part.x === this.fruit.x && part.y === this.fruit.y;
     };
 
-    resetFruit = () => {
+    resetFruit() {
         let x = this.randomBoardNumber();
         let y = this.randomBoardNumber();
 
@@ -97,7 +98,7 @@ export class Snake {
         this.fruit.y = y;
     };
 
-    eatFruit = () => {
+    eatFruit() {
         this.score++;
 
         let tail = Object.assign({}, this.snake.parts[this.snake.parts.length - 1]);
@@ -106,17 +107,17 @@ export class Snake {
         this.resetFruit();
     };
 
-    selfCollision = (part) => {
+    selfCollision(part) {
         if (part.x < this.BOARD_SIZE - 1 && part.y < this.BOARD_SIZE) {
             return this.board[part.y][part.x] === true;
         }
     };
 
-    boardCollision = (part) => {
+    boardCollision(part) {
         return part.x === this.BOARD_SIZE || part.x === -1 || part.y === this.BOARD_SIZE || part.y === -1;
     };
 
-    repositionHead = () => {
+    repositionHead() {
         let newHead = Object.assign({}, this.snake.parts[0]);
 
         if (this.tempDirection === this.CONTROLSAI.LEFT) {
@@ -132,20 +133,20 @@ export class Snake {
         return newHead;
     };
 
-    getStatus = () => {
+    getStatus() {
         return new Promise(resolve => {
             return this.isDeadResolver = resolve;
         });
     };
 
-    dead = ()  => {
+    dead() {
         this.isDead = true;
         this.isDeadResolver(true);
         clearTimeout(this.timer);
         this.calculateFitness();
     };
 
-    updatePositions = async () => {
+    async updatePositions() {
         this.lookAround();
         await this.think();
         let newHead = this.repositionHead();
@@ -180,7 +181,7 @@ export class Snake {
         }, this.interval);
     };
 
-    calculateFitness = () => {
+    calculateFitness() {
         if (this.score < 10) {
             this.fitness = Math.floor(this.lifeTime * this.lifeTime) * Math.pow(2, this.score);
         } else {
@@ -191,7 +192,7 @@ export class Snake {
         return this.fitness;
     };
 
-    lookAround = () => {
+    lookAround() {
 
         this.vision = [...this.lookInDirection({x: -1, y: 0}),
             ...this.lookInDirection({x: -1, y: -1}),
@@ -205,7 +206,7 @@ export class Snake {
         // console.table(vision);
     };
 
-    lookInDirection = (directionVector) => {
+    lookInDirection(directionVector) {
         let head = {...this.snake.parts[0]};
         let look = new Array(3).fill(0);
         let distance = 0;
@@ -236,7 +237,7 @@ export class Snake {
         return look;
     };
 
-    think = async () => {
+    async think() {
         let output = await this.decide(this.vision);
         let brainResult = output.dataSync();
         // console.table(brainResult);
@@ -245,11 +246,11 @@ export class Snake {
         //console.log('output: ', result, indexOfMaxValue);
     };
 
-    clone = () => {
+    clone() {
         // return new Snake(-1, this.interval, this.mind)
     };
 
-    initBain = () => {
+    initBain() {
         this.brain = tf.sequential();
         this.brain.add(tf.layers.dense({inputShape: [24], units: 1}));
         this.brain.add(tf.layers.dense({units: 24, activation: 'sigmoid',
@@ -261,7 +262,7 @@ export class Snake {
         this.brain.add(tf.layers.dense({units: 4}));
     };
 
-    decide = async (input) => {
+   async decide(input){
         //console.log('input: ', input);
         return tf.tidy(() => {
             return this.brain.predict(tf.tensor([input]));
